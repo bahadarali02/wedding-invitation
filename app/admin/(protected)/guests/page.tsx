@@ -1,3 +1,5 @@
+export const instant = false;
+
 import Link from "next/link";
 import {
   Eye,
@@ -12,9 +14,7 @@ import CreateGuestForm from "@/components/admin/create-guest-form";
 import CopyInviteLink from "@/components/admin/copy-invite-link";
 import WhatsAppShare from "@/components/admin/whatsapp-share";
 
-import {
-  toggleGuestAction,
-} from "./actions";
+import { toggleGuestAction } from "./actions";
 
 export default async function GuestsPage() {
   const supabase = await createClient();
@@ -27,9 +27,8 @@ export default async function GuestsPage() {
 
   if (!wedding) {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-        Wedding settings not found. Create your wedding record
-        first.
+      <div className="rounded-3xl border border-red-200 bg-red-50 p-8 text-sm text-red-700">
+        Wedding settings not found.
       </div>
     );
   }
@@ -49,7 +48,6 @@ export default async function GuestsPage() {
       display_name,
       phone,
       invite_type,
-      max_guests,
       token,
       is_active,
       invitation_sent_at,
@@ -80,9 +78,8 @@ export default async function GuestsPage() {
         </h1>
 
         <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-500">
-          Har guest ke liye unique invitation create karo aur decide
-          karo ke usay Mehndi, Barat ya Walima mein se kaun se
-          events show hon.
+          Create a unique invitation for every guest and control
+          exactly which wedding events they can see.
         </p>
       </div>
 
@@ -125,7 +122,7 @@ export default async function GuestsPage() {
                   </th>
 
                   <th className="pb-4 pr-6 text-xs font-semibold uppercase tracking-wider text-stone-400">
-                    Invite
+                    Invite Type
                   </th>
 
                   <th className="pb-4 pr-6 text-xs font-semibold uppercase tracking-wider text-stone-400">
@@ -146,8 +143,28 @@ export default async function GuestsPage() {
                 {guests.map((guest: any) => {
                   const guestEvents =
                     guest.guest_events
-                      ?.map((item: any) => item.events?.name)
+                      ?.map(
+                        (item: any) =>
+                          item.events?.name
+                      )
                       .filter(Boolean) ?? [];
+
+                  let inviteDescription =
+                    "Individual invitation";
+
+                  if (
+                    guest.invite_type === "couple"
+                  ) {
+                    inviteDescription =
+                      "Couple invitation";
+                  }
+
+                  if (
+                    guest.invite_type === "family"
+                  ) {
+                    inviteDescription =
+                      "Full family invitation";
+                  }
 
                   return (
                     <tr
@@ -160,7 +177,8 @@ export default async function GuestsPage() {
                         </p>
 
                         <p className="mt-1 text-xs text-stone-400">
-                          {guest.phone || "No phone"}
+                          {guest.phone ||
+                            "No WhatsApp number"}
                         </p>
                       </td>
 
@@ -170,33 +188,40 @@ export default async function GuestsPage() {
                         </p>
 
                         <p className="mt-1 text-xs text-stone-400">
-                          Max {guest.max_guests} guest
-                          {guest.max_guests !== 1 ? "s" : ""}
+                          {inviteDescription}
                         </p>
                       </td>
 
                       <td className="py-5 pr-6">
                         <div className="flex max-w-xs flex-wrap gap-1.5">
-                          {guestEvents.map((eventName: string) => (
-                            <span
-                              key={eventName}
-                              className="rounded-full bg-[#f5efe2] px-2.5 py-1 text-[11px] font-medium text-[#8d6e38]"
-                            >
-                              {eventName}
-                            </span>
-                          ))}
+                          {guestEvents.map(
+                            (
+                              eventName: string
+                            ) => (
+                              <span
+                                key={eventName}
+                                className="rounded-full bg-[#f5efe2] px-2.5 py-1 text-[11px] font-medium text-[#8d6e38]"
+                              >
+                                {eventName}
+                              </span>
+                            )
+                          )}
                         </div>
                       </td>
 
                       <td className="py-5 pr-6">
                         {guest.is_active ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-                            <ShieldCheck size={13} />
+                            <ShieldCheck
+                              size={13}
+                            />
                             Active
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-500">
-                            <ShieldOff size={13} />
+                            <ShieldOff
+                              size={13}
+                            />
                             Disabled
                           </span>
                         )}
@@ -213,15 +238,23 @@ export default async function GuestsPage() {
                             Preview
                           </Link>
 
-                          <CopyInviteLink token={guest.token} />
+                          <CopyInviteLink
+                            token={guest.token}
+                          />
 
                           <WhatsAppShare
                             token={guest.token}
                             phone={guest.phone}
-                            displayName={guest.display_name}
+                            displayName={
+                              guest.display_name
+                            }
                           />
 
-                          <form action={toggleGuestAction}>
+                          <form
+                            action={
+                              toggleGuestAction
+                            }
+                          >
                             <input
                               type="hidden"
                               name="guest_id"
@@ -231,7 +264,9 @@ export default async function GuestsPage() {
                             <input
                               type="hidden"
                               name="next_state"
-                              value={String(!guest.is_active)}
+                              value={String(
+                                !guest.is_active
+                              )}
                             />
 
                             <button
