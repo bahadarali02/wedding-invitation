@@ -32,14 +32,16 @@ async function getAdminAndWedding() {
     redirect("/admin/login");
   }
 
-  const { data: wedding, error: weddingError } = await supabase
+  const { data: wedding } = await supabase
     .from("wedding_settings")
     .select("id")
     .limit(1)
     .single();
 
-  if (weddingError || !wedding) {
-    throw new Error("Wedding settings not found.");
+  if (!wedding) {
+    throw new Error(
+      "Wedding settings not found."
+    );
   }
 
   return {
@@ -53,9 +55,14 @@ export async function createGuestAction(
   formData: FormData
 ): Promise<GuestFormState> {
   try {
-    const { supabase, weddingId } = await getAdminAndWedding();
+    const {
+      supabase,
+      weddingId,
+    } = await getAdminAndWedding();
 
-    const name = String(formData.get("name") ?? "").trim();
+    const name = String(
+      formData.get("name") ?? ""
+    ).trim();
 
     const displayName = String(
       formData.get("display_name") ?? ""
@@ -66,7 +73,8 @@ export async function createGuestAction(
     ).trim();
 
     const inviteType = String(
-      formData.get("invite_type") ?? "individual"
+      formData.get("invite_type") ??
+        "individual"
     );
 
     const customMessage = String(
@@ -75,38 +83,30 @@ export async function createGuestAction(
 
     const eventIds = formData
       .getAll("event_ids")
-      .map((value) => String(value))
+      .map(String)
       .filter(Boolean);
 
-    if (!name) {
+    if (!name || !displayName) {
       return {
-        error: "Guest name is required.",
-      };
-    }
-
-    if (!displayName) {
-      return {
-        error: "Invitation display name is required.",
-      };
-    }
-
-    if (
-      !["individual", "couple", "family"].includes(inviteType)
-    ) {
-      return {
-        error: "Invalid invitation type.",
+        error:
+          "Guest name and invitation name are required.",
       };
     }
 
     if (eventIds.length === 0) {
       return {
-        error: "Please select at least one event.",
+        error:
+          "Please select at least one event.",
       };
     }
 
-    const token = crypto.randomBytes(24).toString("hex");
+    const token =
+      crypto.randomBytes(24).toString("hex");
 
-    const { data: guest, error: guestError } = await supabase
+    const {
+      data: guest,
+      error: guestError,
+    } = await supabase
       .from("guests")
       .insert({
         wedding_id: weddingId,
@@ -114,7 +114,9 @@ export async function createGuestAction(
         display_name: displayName,
         phone: phone || null,
         invite_type: inviteType,
-        custom_message: customMessage || null,
+        custom_message:
+          customMessage || null,
+        invitation_scope: "both",
         token,
         is_active: true,
       })
@@ -122,23 +124,22 @@ export async function createGuestAction(
       .single();
 
     if (guestError || !guest) {
-      console.error("Guest insert error:", guestError);
-
       return {
         error:
           guestError?.message ??
-          "Unable to create personalized invitation.",
+          "Unable to create invitation.",
       };
     }
 
-    const eventRows = eventIds.map((eventId) => ({
-      guest_id: guest.id,
-      event_id: eventId,
-    }));
-
-    const { error: eventError } = await supabase
-      .from("guest_events")
-      .insert(eventRows);
+    const { error: eventError } =
+      await supabase
+        .from("guest_events")
+        .insert(
+          eventIds.map((eventId) => ({
+            guest_id: guest.id,
+            event_id: eventId,
+          }))
+        );
 
     if (eventError) {
       await supabase
@@ -146,10 +147,9 @@ export async function createGuestAction(
         .delete()
         .eq("id", guest.id);
 
-      console.error("Guest event insert error:", eventError);
-
       return {
-        error: "Unable to assign events to this guest.",
+        error:
+          "Unable to assign selected events.",
       };
     }
 
@@ -157,13 +157,15 @@ export async function createGuestAction(
     revalidatePath("/admin/dashboard");
 
     return {
-      success: "Personalized invitation created successfully.",
+      success:
+        "Invitation created successfully.",
     };
   } catch (error) {
     console.error(error);
 
     return {
-      error: "Something went wrong while creating invitation.",
+      error:
+        "Something went wrong while creating invitation.",
     };
   }
 }
@@ -171,27 +173,28 @@ export async function createGuestAction(
 export async function toggleGuestAction(
   formData: FormData
 ) {
-  const { supabase } = await getAdminAndWedding();
+  const { supabase } =
+    await getAdminAndWedding();
 
   const guestId = String(
     formData.get("guest_id") ?? ""
   );
 
   const nextState =
-    String(formData.get("next_state")) === "true";
+    String(
+      formData.get("next_state")
+    ) === "true";
 
-  if (!guestId) {
-    return;
-  }
+  if (!guestId) return;
 
   await supabase
     .from("guests")
     .update({
       is_active: nextState,
-      updated_at: new Date().toISOString(),
+      updated_at:
+        new Date().toISOString(),
     })
     .eq("id", guestId);
 
   revalidatePath("/admin/guests");
-  revalidatePath("/admin/dashboard");
 }

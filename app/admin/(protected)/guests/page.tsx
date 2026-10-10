@@ -35,7 +35,7 @@ export default async function GuestsPage() {
 
   const { data: events } = await supabase
     .from("events")
-    .select("id, name")
+    .select("id, name, slug")
     .eq("wedding_id", wedding.id)
     .eq("is_active", true)
     .order("display_order");
@@ -48,10 +48,9 @@ export default async function GuestsPage() {
       display_name,
       phone,
       invite_type,
+      invitation_scope,
       token,
       is_active,
-      invitation_sent_at,
-      first_opened_at,
       created_at,
       guest_events (
         event_id,
@@ -78,8 +77,8 @@ export default async function GuestsPage() {
         </h1>
 
         <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-500">
-          Create a unique invitation for every guest and control
-          exactly which wedding events they can see.
+          Guest-wise decide karo ke invitation me sirf Haider side,
+          sirf Iqra side ya dono show hon.
         </p>
       </div>
 
@@ -120,19 +119,18 @@ export default async function GuestsPage() {
                   <th className="pb-4 pr-6 text-xs font-semibold uppercase tracking-wider text-stone-400">
                     Guest
                   </th>
-
                   <th className="pb-4 pr-6 text-xs font-semibold uppercase tracking-wider text-stone-400">
-                    Invite Type
+                    Type
                   </th>
-
+                  <th className="pb-4 pr-6 text-xs font-semibold uppercase tracking-wider text-stone-400">
+                    Card Content
+                  </th>
                   <th className="pb-4 pr-6 text-xs font-semibold uppercase tracking-wider text-stone-400">
                     Events
                   </th>
-
                   <th className="pb-4 pr-6 text-xs font-semibold uppercase tracking-wider text-stone-400">
                     Status
                   </th>
-
                   <th className="pb-4 text-right text-xs font-semibold uppercase tracking-wider text-stone-400">
                     Actions
                   </th>
@@ -149,23 +147,6 @@ export default async function GuestsPage() {
                       )
                       .filter(Boolean) ?? [];
 
-                  let inviteDescription =
-                    "Individual invitation";
-
-                  if (
-                    guest.invite_type === "couple"
-                  ) {
-                    inviteDescription =
-                      "Couple invitation";
-                  }
-
-                  if (
-                    guest.invite_type === "family"
-                  ) {
-                    inviteDescription =
-                      "Full family invitation";
-                  }
-
                   return (
                     <tr
                       key={guest.id}
@@ -177,8 +158,7 @@ export default async function GuestsPage() {
                         </p>
 
                         <p className="mt-1 text-xs text-stone-400">
-                          {guest.phone ||
-                            "No WhatsApp number"}
+                          {guest.phone || "No WhatsApp number"}
                         </p>
                       </td>
 
@@ -186,18 +166,22 @@ export default async function GuestsPage() {
                         <p className="text-sm capitalize text-stone-600">
                           {guest.invite_type}
                         </p>
+                      </td>
 
-                        <p className="mt-1 text-xs text-stone-400">
-                          {inviteDescription}
+                      <td className="py-5 pr-6">
+                        <p className="text-sm capitalize text-stone-600">
+                          {guest.invitation_scope === "both"
+                            ? "Both weddings"
+                            : guest.invitation_scope === "haider"
+                              ? "Only Haider side"
+                              : "Only Iqra side"}
                         </p>
                       </td>
 
                       <td className="py-5 pr-6">
                         <div className="flex max-w-xs flex-wrap gap-1.5">
                           {guestEvents.map(
-                            (
-                              eventName: string
-                            ) => (
+                            (eventName: string) => (
                               <span
                                 key={eventName}
                                 className="rounded-full bg-[#f5efe2] px-2.5 py-1 text-[11px] font-medium text-[#8d6e38]"
@@ -212,16 +196,12 @@ export default async function GuestsPage() {
                       <td className="py-5 pr-6">
                         {guest.is_active ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
-                            <ShieldCheck
-                              size={13}
-                            />
+                            <ShieldCheck size={13} />
                             Active
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-500">
-                            <ShieldOff
-                              size={13}
-                            />
+                            <ShieldOff size={13} />
                             Disabled
                           </span>
                         )}
@@ -238,23 +218,15 @@ export default async function GuestsPage() {
                             Preview
                           </Link>
 
-                          <CopyInviteLink
-                            token={guest.token}
-                          />
+                          <CopyInviteLink token={guest.token} />
 
                           <WhatsAppShare
                             token={guest.token}
                             phone={guest.phone}
-                            displayName={
-                              guest.display_name
-                            }
+                            displayName={guest.display_name}
                           />
 
-                          <form
-                            action={
-                              toggleGuestAction
-                            }
-                          >
+                          <form action={toggleGuestAction}>
                             <input
                               type="hidden"
                               name="guest_id"
@@ -264,9 +236,7 @@ export default async function GuestsPage() {
                             <input
                               type="hidden"
                               name="next_state"
-                              value={String(
-                                !guest.is_active
-                              )}
+                              value={String(!guest.is_active)}
                             />
 
                             <button

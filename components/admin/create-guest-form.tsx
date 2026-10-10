@@ -23,6 +23,7 @@ import {
 type EventOption = {
   id: string;
   name: string;
+  slug?: string;
 };
 
 type Props = {
@@ -77,9 +78,9 @@ export default function CreateGuestForm({
         </h2>
 
         <p className="mt-2 text-sm leading-6 text-stone-500">
-          Guest ka naam, WhatsApp number aur events select
-          karo. Har guest ko unique private invitation link
-          milega.
+          Har invitation mein dono wedding celebrations
+          show hongi. Neeche sirf guest aur unke invited
+          events select karo.
         </p>
       </div>
 
@@ -98,12 +99,12 @@ export default function CreateGuestForm({
             <input
               name="name"
               value={name}
-              onChange={(event) =>
-                setName(event.target.value)
+              onChange={(e) =>
+                setName(e.target.value)
               }
               required
               placeholder="Ahmed Khan"
-              className="h-12 w-full rounded-xl border border-stone-200 bg-white pl-11 pr-4 text-sm outline-none transition focus:border-[#b99a5b] focus:ring-4 focus:ring-[#b99a5b]/10"
+              className="h-12 w-full rounded-xl border border-stone-200 pl-11 pr-4 text-sm outline-none focus:border-[#b99a5b] focus:ring-4 focus:ring-[#b99a5b]/10"
             />
           </div>
         </div>
@@ -123,7 +124,7 @@ export default function CreateGuestForm({
               name="phone"
               type="tel"
               placeholder="03001234567"
-              className="h-12 w-full rounded-xl border border-stone-200 bg-white pl-11 pr-4 text-sm outline-none transition focus:border-[#b99a5b] focus:ring-4 focus:ring-[#b99a5b]/10"
+              className="h-12 w-full rounded-xl border border-stone-200 pl-11 pr-4 text-sm outline-none focus:border-[#b99a5b] focus:ring-4 focus:ring-[#b99a5b]/10"
             />
           </div>
         </div>
@@ -137,16 +138,12 @@ export default function CreateGuestForm({
         <input
           name="display_name"
           value={displayName}
-          onChange={(event) =>
-            setDisplayName(event.target.value)
+          onChange={(e) =>
+            setDisplayName(e.target.value)
           }
           required
-          className="h-12 w-full rounded-xl border border-stone-200 bg-white px-4 text-sm outline-none transition focus:border-[#b99a5b] focus:ring-4 focus:ring-[#b99a5b]/10"
+          className="h-12 w-full rounded-xl border border-stone-200 px-4 text-sm outline-none focus:border-[#b99a5b] focus:ring-4 focus:ring-[#b99a5b]/10"
         />
-
-        <p className="mt-2 text-xs text-stone-400">
-          Is field ko manually bhi change kar sakte ho.
-        </p>
       </div>
 
       <div className="mt-7">
@@ -155,113 +152,62 @@ export default function CreateGuestForm({
         </label>
 
         <div className="grid gap-3 sm:grid-cols-3">
-          <label
-            className={`cursor-pointer rounded-2xl border p-4 transition ${
-              inviteType === "individual"
-                ? "border-[#b99a5b] bg-[#f8f2e6]"
-                : "border-stone-200 hover:bg-stone-50"
-            }`}
-          >
-            <input
-              type="radio"
-              name="invite_type"
-              value="individual"
-              checked={inviteType === "individual"}
-              onChange={() =>
-                setInviteType("individual")
-              }
-              className="sr-only"
-            />
+          {[
+            {
+              value: "individual",
+              title: "Individual",
+              icon: User,
+            },
+            {
+              value: "couple",
+              title: "Couple",
+              icon: Heart,
+            },
+            {
+              value: "family",
+              title: "Full Family",
+              icon: Users,
+            },
+          ].map((option) => {
+            const Icon = option.icon;
 
-            <User
-              size={19}
-              className={
-                inviteType === "individual"
-                  ? "text-[#9b793d]"
-                  : "text-stone-400"
-              }
-            />
+            return (
+              <label
+                key={option.value}
+                className={`cursor-pointer rounded-2xl border p-4 transition ${
+                  inviteType === option.value
+                    ? "border-[#b99a5b] bg-[#f8f2e6]"
+                    : "border-stone-200"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="invite_type"
+                  value={option.value}
+                  checked={
+                    inviteType === option.value
+                  }
+                  onChange={() =>
+                    setInviteType(option.value)
+                  }
+                  className="sr-only"
+                />
 
-            <p className="mt-3 text-sm font-semibold text-stone-800">
-              Individual
-            </p>
+                <Icon
+                  size={19}
+                  className={
+                    inviteType === option.value
+                      ? "text-[#9b793d]"
+                      : "text-stone-400"
+                  }
+                />
 
-            <p className="mt-1 text-xs text-stone-400">
-              One person
-            </p>
-          </label>
-
-          <label
-            className={`cursor-pointer rounded-2xl border p-4 transition ${
-              inviteType === "couple"
-                ? "border-[#b99a5b] bg-[#f8f2e6]"
-                : "border-stone-200 hover:bg-stone-50"
-            }`}
-          >
-            <input
-              type="radio"
-              name="invite_type"
-              value="couple"
-              checked={inviteType === "couple"}
-              onChange={() =>
-                setInviteType("couple")
-              }
-              className="sr-only"
-            />
-
-            <Heart
-              size={19}
-              className={
-                inviteType === "couple"
-                  ? "text-[#9b793d]"
-                  : "text-stone-400"
-              }
-            />
-
-            <p className="mt-3 text-sm font-semibold text-stone-800">
-              Couple
-            </p>
-
-            <p className="mt-1 text-xs text-stone-400">
-              Husband & wife
-            </p>
-          </label>
-
-          <label
-            className={`cursor-pointer rounded-2xl border p-4 transition ${
-              inviteType === "family"
-                ? "border-[#b99a5b] bg-[#f8f2e6]"
-                : "border-stone-200 hover:bg-stone-50"
-            }`}
-          >
-            <input
-              type="radio"
-              name="invite_type"
-              value="family"
-              checked={inviteType === "family"}
-              onChange={() =>
-                setInviteType("family")
-              }
-              className="sr-only"
-            />
-
-            <Users
-              size={19}
-              className={
-                inviteType === "family"
-                  ? "text-[#9b793d]"
-                  : "text-stone-400"
-              }
-            />
-
-            <p className="mt-3 text-sm font-semibold text-stone-800">
-              Full Family
-            </p>
-
-            <p className="mt-1 text-xs text-stone-400">
-              Complete family
-            </p>
-          </label>
+                <p className="mt-3 text-sm font-semibold text-stone-800">
+                  {option.title}
+                </p>
+              </label>
+            );
+          })}
         </div>
       </div>
 
@@ -270,11 +216,11 @@ export default function CreateGuestForm({
           Invite to Events
         </label>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           {events.map((event) => (
             <label
               key={event.id}
-              className="flex cursor-pointer items-center gap-3 rounded-2xl border border-stone-200 p-4 transition hover:border-[#d1ba8a] hover:bg-[#faf8f3]"
+              className="flex cursor-pointer items-center gap-3 rounded-2xl border border-stone-200 p-4 hover:bg-[#faf8f3]"
             >
               <input
                 type="checkbox"
@@ -305,8 +251,8 @@ export default function CreateGuestForm({
           <textarea
             name="custom_message"
             rows={4}
-            placeholder="Optional personal message for this guest..."
-            className="w-full resize-none rounded-xl border border-stone-200 bg-white py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[#b99a5b] focus:ring-4 focus:ring-[#b99a5b]/10"
+            placeholder="Optional personal message..."
+            className="w-full resize-none rounded-xl border border-stone-200 py-3 pl-11 pr-4 text-sm outline-none focus:border-[#b99a5b] focus:ring-4 focus:ring-[#b99a5b]/10"
           />
         </div>
       </div>
@@ -326,7 +272,7 @@ export default function CreateGuestForm({
       <button
         type="submit"
         disabled={pending}
-        className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#181713] px-7 text-sm font-semibold text-white transition hover:bg-[#2d2b24] disabled:opacity-60"
+        className="mt-7 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#181713] px-7 text-sm font-semibold text-white disabled:opacity-60"
       >
         {pending ? (
           <>

@@ -32,8 +32,10 @@ export default function WhatsAppShare({
 
     const message =
       `Assalam-o-Alaikum ${displayName},\n\n` +
-      `With great pleasure, we invite you to celebrate our wedding with us.\n\n` +
-      `Your personalized invitation:\n${invitationUrl}`;
+      `With great pleasure, we invite you to our family wedding celebrations.\n\n` +
+      `Your personalized digital invitation is ready:\n${invitationUrl}\n\n` +
+      `Please open the invitation to view all event details.\n\n` +
+      `Warm regards`;
 
     const encoded = encodeURIComponent(message);
 
