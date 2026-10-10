@@ -8,6 +8,8 @@ import {
   CalendarDays,
 } from "lucide-react";
 
+export const instant = false;
+
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
 
@@ -138,6 +140,7 @@ export default async function AdminDashboardPage() {
               <p className="font-serif text-xl text-[#292720]">
                 Recent Invitations
               </p>
+
               <p className="mt-1 text-xs text-stone-400">
                 Guest activity will appear here.
               </p>
@@ -171,8 +174,8 @@ export default async function AdminDashboardPage() {
           </h3>
 
           <p className="mt-4 text-sm leading-6 text-stone-400">
-            Personalized invitations, selective event access and
-            RSVP management will all live here.
+            Personalized invitations, selective event access and RSVP
+            management will all live here.
           </p>
 
           <div className="mt-10 border-t border-white/10 pt-5">
