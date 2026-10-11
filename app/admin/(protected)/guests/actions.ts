@@ -39,15 +39,48 @@ async function getAdminAndWedding() {
     .single();
 
   if (!wedding) {
-    throw new Error(
-      "Wedding settings not found."
-    );
+    throw new Error("Wedding settings not found.");
   }
 
   return {
     supabase,
     weddingId: wedding.id,
   };
+}
+
+/**
+ * Generate a short public invitation token.
+ *
+ * Example:
+ * K7m2Qa9X
+ *
+ * We also check the database before using it,
+ * so accidental duplicates are handled safely.
+ */
+async function generateShortToken(
+  supabase: Awaited<ReturnType<typeof createClient>>
+) {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const token = crypto
+      .randomBytes(6)
+      .toString("base64url")
+      .slice(0, 8);
+
+    const { data: existing } = await supabase
+      .from("guests")
+      .select("id")
+      .eq("token", token)
+      .maybeSingle();
+
+    if (!existing) {
+      return token;
+    }
+  }
+
+  /**
+   * Extremely unlikely fallback.
+   */
+  return crypto.randomBytes(8).toString("base64url");
 }
 
 export async function createGuestAction(
@@ -100,8 +133,9 @@ export async function createGuestAction(
       };
     }
 
-    const token =
-      crypto.randomBytes(24).toString("hex");
+    const token = await generateShortToken(
+      supabase
+    );
 
     const {
       data: guest,
@@ -124,6 +158,11 @@ export async function createGuestAction(
       .single();
 
     if (guestError || !guest) {
+      console.error(
+        "[guest-create]",
+        guestError
+      );
+
       return {
         error:
           guestError?.message ??
@@ -142,6 +181,11 @@ export async function createGuestAction(
         );
 
     if (eventError) {
+      console.error(
+        "[guest-events]",
+        eventError
+      );
+
       await supabase
         .from("guests")
         .delete()
@@ -161,7 +205,10 @@ export async function createGuestAction(
         "Invitation created successfully.",
     };
   } catch (error) {
-    console.error(error);
+    console.error(
+      "[createGuestAction]",
+      error
+    );
 
     return {
       error:
@@ -185,7 +232,9 @@ export async function toggleGuestAction(
       formData.get("next_state")
     ) === "true";
 
-  if (!guestId) return;
+  if (!guestId) {
+    return;
+  }
 
   await supabase
     .from("guests")
