@@ -7,8 +7,7 @@ import {
   ShieldOff,
   Users,
 } from "lucide-react";
-
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 
 import CreateGuestForm from "@/components/admin/create-guest-form";
 import CopyInviteLink from "@/components/admin/copy-invite-link";
@@ -16,14 +15,49 @@ import WhatsAppShare from "@/components/admin/whatsapp-share";
 
 import { toggleGuestAction } from "./actions";
 
-export default async function GuestsPage() {
-  const supabase = await createClient();
+function getAdminClient() {
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  const { data: wedding } = await supabase
+  const serviceRoleKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error(
+      "Supabase environment variables are missing."
+    );
+  }
+
+  return createClient(
+    supabaseUrl,
+    serviceRoleKey,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    }
+  );
+}
+
+export default async function GuestsPage() {
+  const supabase = getAdminClient();
+
+  const {
+    data: wedding,
+    error: weddingError,
+  } = await supabase
     .from("wedding_settings")
     .select("id")
     .limit(1)
-    .single();
+    .maybeSingle();
+
+  if (weddingError) {
+    console.error(
+      "[guests-page] wedding settings error:",
+      weddingError
+    );
+  }
 
   if (!wedding) {
     return (
@@ -33,14 +67,27 @@ export default async function GuestsPage() {
     );
   }
 
-  const { data: events } = await supabase
+  const {
+    data: events,
+    error: eventsError,
+  } = await supabase
     .from("events")
     .select("id, name, slug")
     .eq("wedding_id", wedding.id)
     .eq("is_active", true)
     .order("display_order");
 
-  const { data: guests } = await supabase
+  if (eventsError) {
+    console.error(
+      "[guests-page] events error:",
+      eventsError
+    );
+  }
+
+  const {
+    data: guests,
+    error: guestsError,
+  } = await supabase
     .from("guests")
     .select(`
       id,
@@ -65,6 +112,13 @@ export default async function GuestsPage() {
       ascending: false,
     });
 
+  if (guestsError) {
+    console.error(
+      "[guests-page] guests error:",
+      guestsError
+    );
+  }
+
   return (
     <div className="mx-auto max-w-[1500px]">
       <div className="mb-8">
@@ -77,8 +131,8 @@ export default async function GuestsPage() {
         </h1>
 
         <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-500">
-          Guest-wise decide karo ke invitation me sirf Haider side,
-          sirf Iqra side ya dono show hon.
+          Guest create karo, events select karo aur personalized
+          invitation WhatsApp par share karo.
         </p>
       </div>
 
@@ -119,18 +173,23 @@ export default async function GuestsPage() {
                   <th className="pb-4 pr-6 text-xs font-semibold uppercase tracking-wider text-stone-400">
                     Guest
                   </th>
+
                   <th className="pb-4 pr-6 text-xs font-semibold uppercase tracking-wider text-stone-400">
                     Type
                   </th>
+
                   <th className="pb-4 pr-6 text-xs font-semibold uppercase tracking-wider text-stone-400">
                     Card Content
                   </th>
+
                   <th className="pb-4 pr-6 text-xs font-semibold uppercase tracking-wider text-stone-400">
                     Events
                   </th>
+
                   <th className="pb-4 pr-6 text-xs font-semibold uppercase tracking-wider text-stone-400">
                     Status
                   </th>
+
                   <th className="pb-4 text-right text-xs font-semibold uppercase tracking-wider text-stone-400">
                     Actions
                   </th>
@@ -138,7 +197,7 @@ export default async function GuestsPage() {
               </thead>
 
               <tbody>
-                {guests.map((guest: any) => {
+                {(guests ?? []).map((guest: any) => {
                   const guestEvents =
                     guest.guest_events
                       ?.map(
@@ -158,7 +217,8 @@ export default async function GuestsPage() {
                         </p>
 
                         <p className="mt-1 text-xs text-stone-400">
-                          {guest.phone || "No WhatsApp number"}
+                          {guest.phone ||
+                            "No WhatsApp number"}
                         </p>
                       </td>
 
@@ -170,9 +230,11 @@ export default async function GuestsPage() {
 
                       <td className="py-5 pr-6">
                         <p className="text-sm capitalize text-stone-600">
-                          {guest.invitation_scope === "both"
+                          {guest.invitation_scope ===
+                          "both"
                             ? "Both weddings"
-                            : guest.invitation_scope === "haider"
+                            : guest.invitation_scope ===
+                                "haider"
                               ? "Only Haider side"
                               : "Only Iqra side"}
                         </p>
@@ -181,7 +243,9 @@ export default async function GuestsPage() {
                       <td className="py-5 pr-6">
                         <div className="flex max-w-xs flex-wrap gap-1.5">
                           {guestEvents.map(
-                            (eventName: string) => (
+                            (
+                              eventName: string
+                            ) => (
                               <span
                                 key={eventName}
                                 className="rounded-full bg-[#f5efe2] px-2.5 py-1 text-[11px] font-medium text-[#8d6e38]"
@@ -218,15 +282,23 @@ export default async function GuestsPage() {
                             Preview
                           </Link>
 
-                          <CopyInviteLink token={guest.token} />
+                          <CopyInviteLink
+                            token={guest.token}
+                          />
 
                           <WhatsAppShare
                             token={guest.token}
                             phone={guest.phone}
-                            displayName={guest.display_name}
+                            displayName={
+                              guest.display_name
+                            }
                           />
 
-                          <form action={toggleGuestAction}>
+                          <form
+                            action={
+                              toggleGuestAction
+                            }
+                          >
                             <input
                               type="hidden"
                               name="guest_id"
@@ -236,7 +308,9 @@ export default async function GuestsPage() {
                             <input
                               type="hidden"
                               name="next_state"
-                              value={String(!guest.is_active)}
+                              value={String(
+                                !guest.is_active
+                              )}
                             />
 
                             <button
