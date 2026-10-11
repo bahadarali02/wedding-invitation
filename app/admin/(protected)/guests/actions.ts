@@ -2,44 +2,59 @@
 
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 
 export type GuestFormState = {
   error?: string;
   success?: string;
 };
 
-async function getAdminAndWedding() {
-  const supabase = await createClient();
+function getAdminClient() {
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  const serviceRoleKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error(
+      "Supabase production environment variables are missing."
+    );
+  }
+
+  return createClient(
+    supabaseUrl,
+    serviceRoleKey,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    }
+  );
+}
+
+async function getWedding() {
+  const supabase = getAdminClient();
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/admin/login");
-  }
-
-  const { data: admin } = await supabase
-    .from("admin_profiles")
-    .select("id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!admin) {
-    redirect("/admin/login");
-  }
-
-  const { data: wedding } = await supabase
+    data: wedding,
+    error,
+  } = await supabase
     .from("wedding_settings")
     .select("id")
     .limit(1)
-    .single();
+    .maybeSingle();
 
-  if (!wedding) {
-    throw new Error("Wedding settings not found.");
+  if (error || !wedding) {
+    console.error(
+      "[wedding-settings]",
+      error
+    );
+
+    throw new Error(
+      "Wedding settings not found."
+    );
   }
 
   return {
@@ -48,39 +63,43 @@ async function getAdminAndWedding() {
   };
 }
 
-/**
- * Generate a short public invitation token.
- *
- * Example:
- * K7m2Qa9X
- *
- * We also check the database before using it,
- * so accidental duplicates are handled safely.
- */
 async function generateShortToken(
-  supabase: Awaited<ReturnType<typeof createClient>>
+  supabase: ReturnType<typeof getAdminClient>
 ) {
-  for (let attempt = 0; attempt < 10; attempt++) {
+  for (
+    let attempt = 0;
+    attempt < 10;
+    attempt++
+  ) {
     const token = crypto
       .randomBytes(6)
       .toString("base64url")
       .slice(0, 8);
 
-    const { data: existing } = await supabase
+    const {
+      data: existing,
+      error,
+    } = await supabase
       .from("guests")
       .select("id")
       .eq("token", token)
       .maybeSingle();
+
+    if (error) {
+      console.error(
+        "[token-check]",
+        error
+      );
+    }
 
     if (!existing) {
       return token;
     }
   }
 
-  /**
-   * Extremely unlikely fallback.
-   */
-  return crypto.randomBytes(8).toString("base64url");
+  return crypto
+    .randomBytes(8)
+    .toString("base64url");
 }
 
 export async function createGuestAction(
@@ -91,7 +110,7 @@ export async function createGuestAction(
     const {
       supabase,
       weddingId,
-    } = await getAdminAndWedding();
+    } = await getWedding();
 
     const name = String(
       formData.get("name") ?? ""
@@ -111,7 +130,8 @@ export async function createGuestAction(
     );
 
     const customMessage = String(
-      formData.get("custom_message") ?? ""
+      formData.get("custom_message") ??
+        ""
     ).trim();
 
     const eventIds = formData
@@ -126,16 +146,19 @@ export async function createGuestAction(
       };
     }
 
-    if (eventIds.length === 0) {
+    if (
+      eventIds.length === 0
+    ) {
       return {
         error:
           "Please select at least one event.",
       };
     }
 
-    const token = await generateShortToken(
-      supabase
-    );
+    const token =
+      await generateShortToken(
+        supabase
+      );
 
     const {
       data: guest,
@@ -143,21 +166,41 @@ export async function createGuestAction(
     } = await supabase
       .from("guests")
       .insert({
-        wedding_id: weddingId,
+        wedding_id:
+          weddingId,
+
         name,
-        display_name: displayName,
-        phone: phone || null,
-        invite_type: inviteType,
+
+        display_name:
+          displayName,
+
+        phone:
+          phone || null,
+
+        invite_type:
+          inviteType,
+
         custom_message:
-          customMessage || null,
-        invitation_scope: "both",
+          customMessage ||
+          null,
+
+        invitation_scope:
+          "both",
+
         token,
-        is_active: true,
+
+        is_active:
+          true,
       })
-      .select("id")
+      .select(
+        "id, token"
+      )
       .single();
 
-    if (guestError || !guest) {
+    if (
+      guestError ||
+      !guest
+    ) {
       console.error(
         "[guest-create]",
         guestError
@@ -170,14 +213,26 @@ export async function createGuestAction(
       };
     }
 
-    const { error: eventError } =
+    const {
+      error:
+        eventError,
+    } =
       await supabase
-        .from("guest_events")
+        .from(
+          "guest_events"
+        )
         .insert(
-          eventIds.map((eventId) => ({
-            guest_id: guest.id,
-            event_id: eventId,
-          }))
+          eventIds.map(
+            (
+              eventId
+            ) => ({
+              guest_id:
+                guest.id,
+
+              event_id:
+                eventId,
+            })
+          )
         );
 
     if (eventError) {
@@ -189,7 +244,10 @@ export async function createGuestAction(
       await supabase
         .from("guests")
         .delete()
-        .eq("id", guest.id);
+        .eq(
+          "id",
+          guest.id
+        );
 
       return {
         error:
@@ -197,8 +255,13 @@ export async function createGuestAction(
       };
     }
 
-    revalidatePath("/admin/guests");
-    revalidatePath("/admin/dashboard");
+    revalidatePath(
+      "/admin/guests"
+    );
+
+    revalidatePath(
+      "/admin/dashboard"
+    );
 
     return {
       success:
@@ -220,30 +283,63 @@ export async function createGuestAction(
 export async function toggleGuestAction(
   formData: FormData
 ) {
-  const { supabase } =
-    await getAdminAndWedding();
+  try {
+    const {
+      supabase,
+    } =
+      await getWedding();
 
-  const guestId = String(
-    formData.get("guest_id") ?? ""
-  );
+    const guestId =
+      String(
+        formData.get(
+          "guest_id"
+        ) ?? ""
+      );
 
-  const nextState =
-    String(
-      formData.get("next_state")
-    ) === "true";
+    const nextState =
+      String(
+        formData.get(
+          "next_state"
+        )
+      ) === "true";
 
-  if (!guestId) {
-    return;
+    if (!guestId) {
+      return;
+    }
+
+    const {
+      error,
+    } =
+      await supabase
+        .from(
+          "guests"
+        )
+        .update({
+          is_active:
+            nextState,
+
+          updated_at:
+            new Date().toISOString(),
+        })
+        .eq(
+          "id",
+          guestId
+        );
+
+    if (error) {
+      console.error(
+        "[guest-toggle]",
+        error
+      );
+    }
+
+    revalidatePath(
+      "/admin/guests"
+    );
+  } catch (error) {
+    console.error(
+      "[toggleGuestAction]",
+      error
+    );
   }
-
-  await supabase
-    .from("guests")
-    .update({
-      is_active: nextState,
-      updated_at:
-        new Date().toISOString(),
-    })
-    .eq("id", guestId);
-
-  revalidatePath("/admin/guests");
 }
