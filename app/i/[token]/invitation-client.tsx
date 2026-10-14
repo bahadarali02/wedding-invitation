@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   useCallback,
@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import dynamic from "next/dynamic";
+
 import {
   AnimatePresence,
   motion,
@@ -55,6 +56,7 @@ export type InvitationData = {
       | null;
 
     host_line: string | null;
+
     welcome_message:
       | string
       | null;
@@ -98,7 +100,9 @@ export type InvitationData = {
 
   events: Array<{
     id: string;
+
     name: string;
+
     slug: string;
 
     event_date:
@@ -161,32 +165,44 @@ export function mapData(
   const defaults = [
     {
       slug: "mehndi",
+
       name: "Mehndi",
+
       date:
         "30 October 2026",
+
       time:
         "8:00 PM",
+
       sub: "",
     },
 
     {
       slug: "baraat",
+
       name: "Baraat",
+
       date:
         "31 October 2026",
+
       time:
         "11:00 AM",
+
       sub:
         "Dr Haider Ali & Sidra Noureen",
     },
 
     {
       slug: "walima",
+
       name: "Walima",
+
       date:
         "1 November 2026",
+
       time:
-        "1:00 PM â€“ 4:00 PM",
+        "1:00 PM – 4:00 PM",
+
       sub: "",
     },
   ];
@@ -385,10 +401,8 @@ export function mapData(
           );
 
         /*
-         * Walima approved display
-         * remains 1 PM - 4 PM because
-         * current DB structure has
-         * only start_time.
+         * Walima approved display:
+         * 1:00 PM – 4:00 PM
          */
         if (
           fallback.slug ===
@@ -397,6 +411,108 @@ export function mapData(
           mappedTime =
             fallback.time;
         }
+
+        /*
+         * =====================================
+         * FINAL MEHNDI
+         * =====================================
+         */
+
+        if (
+          fallback.slug ===
+          "mehndi"
+        ) {
+          return {
+            key:
+              fallback.slug,
+
+            name:
+              fallback.name,
+
+            sub:
+              fallback.sub,
+
+            date:
+              mappedDate ||
+              fallback.date,
+
+            time:
+              mappedTime ||
+              fallback.time,
+
+            venue:
+              "Doctor House Chak No. 109 TDA",
+
+            address:
+              "",
+
+            maps:
+              "",
+          };
+        }
+
+        /*
+         * =====================================
+         * FINAL BARAAT
+         * =====================================
+         *
+         * Arrival / time: 11:00 AM
+         * Venue removed
+         * Address removed
+         * Maps removed
+         */
+
+        if (
+          fallback.slug ===
+          "baraat"
+        ) {
+          return {
+            key:
+              fallback.slug,
+
+            name:
+              fallback.name,
+
+            sub:
+              fallback.sub,
+
+            date:
+              mappedDate ||
+              fallback.date,
+
+            time:
+              "11:00 AM",
+
+            venue:
+              "",
+
+            address:
+              "",
+
+            maps:
+              "",
+          };
+        }
+
+        /*
+         * =====================================
+         * WALIMA / OTHER EVENT
+         * =====================================
+         */
+
+        const eventVenue =
+          event?.venue_name ||
+          venue;
+
+        const eventAddress =
+          event?.venue_address ||
+          address;
+
+        const eventMaps =
+          event?.google_maps_url ||
+          `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            `${eventVenue} ${eventAddress}`
+          )}`;
 
         return {
           key:
@@ -417,191 +533,18 @@ export function mapData(
             fallback.time,
 
           venue:
-            event?.venue_name ||
-            venue,
+            eventVenue,
 
           address:
-            event?.venue_address ||
-            address,
+            eventAddress,
 
           maps:
-            event?.google_maps_url ||
-            `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-              `${venue} ${address}`
-            )}`,
+            eventMaps,
         };
       }
     );
-  /*
-   * FINAL EVENT OVERRIDES
-   * Mehndi venue fixed.
-   * Baraat time fixed and venue removed.
-   */
-  const finalEvents = events.map((event) => {
-    if (event.key === "mehndi") {
-      return {
-        ...event,
-        venue: "Doctor House Chak No. 109 TDA",
-        address: "",
-        maps: "",
-      };
-    }
 
-    if (event.key === "baraat") {
-      return {
-        ...event,
-        time: "11:00 AM",
-        venue: "",
-        address: "",
-        maps: "",
-      };
-    }
-
-    return event;
-  });
-
-  /*
-   * FINAL EVENT OVERRIDES
-   * Mehndi venue fixed.
-   * Baraat time fixed and venue removed.
-   */
-  const finalEvents = events.map((event) => {
-    if (event.key === "mehndi") {
-      return {
-        ...event,
-        venue: "Doctor House Chak No. 109 TDA",
-        address: "",
-        maps: "",
-      };
-    }
-
-    if (event.key === "baraat") {
-      return {
-        ...event,
-        time: "11:00 AM",
-        venue: "",
-        address: "",
-        maps: "",
-      };
-    }
-
-    return event;
-  });
-
-
-  /*
-   * FINAL EVENT OVERRIDES
-   * Mehndi venue fixed.
-   * Baraat time fixed and venue removed.
-   */
-  const finalEvents = events.map((event) => {
-    if (event.key === "mehndi") {
-      return {
-        ...event,
-        venue: "Doctor House Chak No. 109 TDA",
-        address: "",
-        maps: "",
-      };
-    }
-
-    if (event.key === "baraat") {
-      return {
-        ...event,
-        time: "11:00 AM",
-        venue: "",
-        address: "",
-        maps: "",
-      };
-    }
-
-    return event;
-  });
-
-  /*
-   * FINAL EVENT OVERRIDES
-   * Mehndi venue fixed.
-   * Baraat time fixed and venue removed.
-   */
-  const finalEvents = events.map((event) => {
-    if (event.key === "mehndi") {
-      return {
-        ...event,
-        venue: "Doctor House Chak No. 109 TDA",
-        address: "",
-        maps: "",
-      };
-    }
-
-    if (event.key === "baraat") {
-      return {
-        ...event,
-        time: "11:00 AM",
-        venue: "",
-        address: "",
-        maps: "",
-      };
-    }
-
-    return event;
-  });
-
-
-  /*
-   * FINAL EVENT OVERRIDES
-   * Mehndi venue fixed.
-   * Baraat time fixed and venue removed.
-   */
-  const finalEvents = events.map((event) => {
-    if (event.key === "mehndi") {
-      return {
-        ...event,
-        venue: "Doctor House Chak No. 109 TDA",
-        address: "",
-        maps: "",
-      };
-    }
-
-    if (event.key === "baraat") {
-      return {
-        ...event,
-        time: "11:00 AM",
-        venue: "",
-        address: "",
-        maps: "",
-      };
-    }
-
-    return event;
-  });
- 
-  /*
-   * FINAL EVENT OVERRIDES
-   * Mehndi venue fixed.
-   * Baraat time fixed and venue removed.
-   */
-  const finalEvents = events.map((event) => {
-    if (event.key === "mehndi") {
-      return {
-        ...event,
-        venue: "Doctor House Chak No. 109 TDA",
-        address: "",
-        maps: "",
-      };
-    }
-
-    if (event.key === "baraat") {
-      return {
-        ...event,
-        time: "11:00 AM",
-        venue: "",
-        address: "",
-        maps: "",
-      };
-    }
-
-    return event;
-  });
- return {
+  return {
     guest:
       d.guest
         .display_name ||
@@ -666,7 +609,7 @@ export function mapData(
     music:
       w.background_music_url,
 
-    events: finalEvents,
+    events,
   };
 }
 
@@ -1299,16 +1242,20 @@ export default function InvitationClient({
                 ? {
                     opacity:
                       0,
+
                     scale:
                       1.04,
+
                     filter:
                       "blur(8px)",
                   }
                 : {
                     opacity:
                       1,
+
                     scale:
                       1,
+
                     filter:
                       "blur(0px)",
                   }
@@ -1388,7 +1335,7 @@ export default function InvitationClient({
                 }}
               >
                 With love,
-                weâ€™ll see you
+                we’ll see you
                 there.
               </motion.p>
             </motion.div>

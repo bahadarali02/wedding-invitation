@@ -227,40 +227,109 @@ export default async function InvitationPage({
    * Haider Walima.
    *
    * No separate Iqra Baraat / Walima.
+   *
+   * FINAL OVERRIDES:
+   *
+   * Mehndi venue:
+   * Doctor House Chak No. 109 TDA
+   *
+   * Baraat:
+   * Arrival / start time = 11:00 AM
+   * No venue
+   * No address
+   * No map
    */
 
-  const events =
-    allSelectedEvents.filter(
-      (event: any) => {
-        const slug = String(
-          event.slug ?? ""
-        ).toLowerCase();
+  const events = allSelectedEvents
+    .filter((event: any) => {
+      const slug = String(
+        event.slug ?? ""
+      ).toLowerCase();
 
-        const name = String(
-          event.name ?? ""
-        ).toLowerCase();
+      const name = String(
+        event.name ?? ""
+      ).toLowerCase();
 
-        if (
-          slug === "iqra-baraat" ||
-          slug === "iqra-walima"
-        ) {
-          return false;
-        }
-
-        if (
-          name.includes("iqra") &&
-          (
-            name.includes("baraat") ||
-            name.includes("barat") ||
-            name.includes("walima")
-          )
-        ) {
-          return false;
-        }
-
-        return true;
+      if (
+        slug === "iqra-baraat" ||
+        slug === "iqra-walima"
+      ) {
+        return false;
       }
-    );
+
+      if (
+        name.includes("iqra") &&
+        (
+          name.includes("baraat") ||
+          name.includes("barat") ||
+          name.includes("walima")
+        )
+      ) {
+        return false;
+      }
+
+      return true;
+    })
+    .map((event: any) => {
+      const slug = String(
+        event.slug ?? ""
+      ).toLowerCase();
+
+      const name = String(
+        event.name ?? ""
+      ).toLowerCase();
+
+      const isMehndi =
+        slug.includes("mehndi") ||
+        name.includes("mehndi");
+
+      const isBaraat =
+        slug.includes("baraat") ||
+        slug.includes("barat") ||
+        name.includes("baraat") ||
+        name.includes("barat");
+
+      /*
+       * Final Mehndi override
+       */
+      if (isMehndi) {
+        return {
+          ...event,
+
+          venue_name:
+            "Doctor House Chak No. 109 TDA",
+
+          venue_address:
+            null,
+
+          google_maps_url:
+            null,
+        };
+      }
+
+      /*
+       * Final Baraat override
+       */
+      if (isBaraat) {
+        return {
+          ...event,
+
+          start_time:
+            "11:00:00",
+
+          venue_name:
+            null,
+
+          venue_address:
+            null,
+
+          google_maps_url:
+            null,
+        };
+      }
+
+      return event;
+    });
 
   /*
    * ----------------------------------------
@@ -351,9 +420,9 @@ export default async function InvitationPage({
     events,
   };
 
- return (
-  <InvitationClient
-    data={invitation}
-  />
-);
+  return (
+    <InvitationClient
+      data={invitation}
+    />
+  );
 }
