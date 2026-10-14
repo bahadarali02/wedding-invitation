@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   useCallback,
@@ -186,7 +186,7 @@ export function mapData(
       date:
         "1 November 2026",
       time:
-        "1:00 PM – 4:00 PM",
+        "1:00 PM â€“ 4:00 PM",
       sub: "",
     },
   ];
@@ -432,8 +432,176 @@ export function mapData(
         };
       }
     );
+  /*
+   * FINAL EVENT OVERRIDES
+   * Mehndi venue fixed.
+   * Baraat time fixed and venue removed.
+   */
+  const finalEvents = events.map((event) => {
+    if (event.key === "mehndi") {
+      return {
+        ...event,
+        venue: "Doctor House Chak No. 109 TDA",
+        address: "",
+        maps: "",
+      };
+    }
 
-  return {
+    if (event.key === "baraat") {
+      return {
+        ...event,
+        time: "11:00 AM",
+        venue: "",
+        address: "",
+        maps: "",
+      };
+    }
+
+    return event;
+  });
+
+  /*
+   * FINAL EVENT OVERRIDES
+   * Mehndi venue fixed.
+   * Baraat time fixed and venue removed.
+   */
+  const finalEvents = events.map((event) => {
+    if (event.key === "mehndi") {
+      return {
+        ...event,
+        venue: "Doctor House Chak No. 109 TDA",
+        address: "",
+        maps: "",
+      };
+    }
+
+    if (event.key === "baraat") {
+      return {
+        ...event,
+        time: "11:00 AM",
+        venue: "",
+        address: "",
+        maps: "",
+      };
+    }
+
+    return event;
+  });
+
+
+  /*
+   * FINAL EVENT OVERRIDES
+   * Mehndi venue fixed.
+   * Baraat time fixed and venue removed.
+   */
+  const finalEvents = events.map((event) => {
+    if (event.key === "mehndi") {
+      return {
+        ...event,
+        venue: "Doctor House Chak No. 109 TDA",
+        address: "",
+        maps: "",
+      };
+    }
+
+    if (event.key === "baraat") {
+      return {
+        ...event,
+        time: "11:00 AM",
+        venue: "",
+        address: "",
+        maps: "",
+      };
+    }
+
+    return event;
+  });
+
+  /*
+   * FINAL EVENT OVERRIDES
+   * Mehndi venue fixed.
+   * Baraat time fixed and venue removed.
+   */
+  const finalEvents = events.map((event) => {
+    if (event.key === "mehndi") {
+      return {
+        ...event,
+        venue: "Doctor House Chak No. 109 TDA",
+        address: "",
+        maps: "",
+      };
+    }
+
+    if (event.key === "baraat") {
+      return {
+        ...event,
+        time: "11:00 AM",
+        venue: "",
+        address: "",
+        maps: "",
+      };
+    }
+
+    return event;
+  });
+
+
+  /*
+   * FINAL EVENT OVERRIDES
+   * Mehndi venue fixed.
+   * Baraat time fixed and venue removed.
+   */
+  const finalEvents = events.map((event) => {
+    if (event.key === "mehndi") {
+      return {
+        ...event,
+        venue: "Doctor House Chak No. 109 TDA",
+        address: "",
+        maps: "",
+      };
+    }
+
+    if (event.key === "baraat") {
+      return {
+        ...event,
+        time: "11:00 AM",
+        venue: "",
+        address: "",
+        maps: "",
+      };
+    }
+
+    return event;
+  });
+ 
+  /*
+   * FINAL EVENT OVERRIDES
+   * Mehndi venue fixed.
+   * Baraat time fixed and venue removed.
+   */
+  const finalEvents = events.map((event) => {
+    if (event.key === "mehndi") {
+      return {
+        ...event,
+        venue: "Doctor House Chak No. 109 TDA",
+        address: "",
+        maps: "",
+      };
+    }
+
+    if (event.key === "baraat") {
+      return {
+        ...event,
+        time: "11:00 AM",
+        venue: "",
+        address: "",
+        maps: "",
+      };
+    }
+
+    return event;
+  });
+ return {
     guest:
       d.guest
         .display_name ||
@@ -498,7 +666,7 @@ export function mapData(
     music:
       w.background_music_url,
 
-    events,
+    events: finalEvents,
   };
 }
 
@@ -1220,7 +1388,7 @@ export default function InvitationClient({
                 }}
               >
                 With love,
-                we’ll see you
+                weâ€™ll see you
                 there.
               </motion.p>
             </motion.div>
