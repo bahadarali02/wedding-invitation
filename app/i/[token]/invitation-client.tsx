@@ -100,9 +100,7 @@ export type InvitationData = {
 
   events: Array<{
     id: string;
-
     name: string;
-
     slug: string;
 
     event_date:
@@ -165,44 +163,32 @@ export function mapData(
   const defaults = [
     {
       slug: "mehndi",
-
       name: "Mehndi",
-
       date:
         "30 October 2026",
-
       time:
         "8:00 PM",
-
       sub: "",
     },
 
     {
       slug: "baraat",
-
       name: "Baraat",
-
       date:
         "31 October 2026",
-
       time:
         "11:00 AM",
-
       sub:
         "Dr Haider Ali & Sidra Noureen",
     },
 
     {
       slug: "walima",
-
       name: "Walima",
-
       date:
         "1 November 2026",
-
       time:
         "1:00 PM – 4:00 PM",
-
       sub: "",
     },
   ];
@@ -289,57 +275,42 @@ export function mapData(
     }`;
   }
 
-  const allowed = [
-    "mehndi",
-    "baraat",
-    "barat",
-    "walima",
-  ];
+  /*
+   * Only events actually assigned
+   * to this guest are available here.
+   *
+   * Iqra separate Baraat / Walima
+   * remain hidden from public timeline.
+   */
 
   const fromDb = [
     ...(d.events ?? []),
   ]
-    .filter(
-      (
-        event
-      ) => {
-        const slug =
-          String(
-            event.slug ??
-              ""
-          ).toLowerCase();
+    .filter((event) => {
+      const searchable =
+        `${event.name ?? ""} ${event.slug ?? ""}`.toLowerCase();
 
-        const name =
-          String(
-            event.name ??
-              ""
-          ).toLowerCase();
-
-        return allowed.some(
-          (
-            key
-          ) =>
-            slug.includes(
-              key
-            ) ||
-            name.includes(
-              key
-            )
-        );
+      if (
+        searchable.includes(
+          "iqra"
+        ) &&
+        (
+          searchable.includes(
+            "baraat"
+          ) ||
+          searchable.includes(
+            "barat"
+          ) ||
+          searchable.includes(
+            "walima"
+          )
+        )
+      ) {
+        return false;
       }
-    )
-    .filter(
-      (
-        event
-      ) => {
-        const searchable =
-          `${event.name ?? ""} ${event.slug ?? ""}`;
 
-        return !/iqra/i.test(
-          searchable
-        );
-      }
-    )
+      return true;
+    })
     .sort(
       (
         a,
@@ -355,8 +326,18 @@ export function mapData(
         )
     );
 
+  /*
+   * IMPORTANT:
+   *
+   * We use flatMap instead of defaults.map.
+   *
+   * If a guest does NOT have an event
+   * assigned in guest_events, that event
+   * returns [] and is completely hidden.
+   */
+
   const events =
-    defaults.map(
+    defaults.flatMap(
       (
         fallback
       ) => {
@@ -367,6 +348,15 @@ export function mapData(
             ) => {
               const searchable =
                 `${item.slug ?? ""} ${item.name ?? ""}`.toLowerCase();
+
+              if (
+                fallback.slug ===
+                "mehndi"
+              ) {
+                return searchable.includes(
+                  "mehndi"
+                );
+              }
 
               if (
                 fallback.slug ===
@@ -382,28 +372,47 @@ export function mapData(
                 );
               }
 
-              return searchable.includes(
-                fallback.slug
-              );
+              if (
+                fallback.slug ===
+                "walima"
+              ) {
+                return searchable.includes(
+                  "walima"
+                );
+              }
+
+              return false;
             }
           );
 
+        /*
+         * Event not assigned to guest:
+         * completely remove it.
+         */
+
+        if (!event) {
+          return [];
+        }
+
         const mappedDate =
           fmtDate(
-            event?.event_date ??
+            event.event_date ??
               null
           );
 
         let mappedTime =
           fmtTime(
-            event?.start_time ??
+            event.start_time ??
               null
           );
 
         /*
-         * Walima approved display:
-         * 1:00 PM – 4:00 PM
+         * WALIMA
+         *
+         * Approved display remains
+         * 1:00 PM – 4:00 PM.
          */
+
         if (
           fallback.slug ===
           "walima"
@@ -413,16 +422,113 @@ export function mapData(
         }
 
         /*
-         * =====================================
-         * FINAL MEHNDI
-         * =====================================
+         * ==========================
+         * MEHNDI
+         * ==========================
          */
 
         if (
           fallback.slug ===
           "mehndi"
         ) {
-          return {
+          return [
+            {
+              key:
+                fallback.slug,
+
+              name:
+                fallback.name,
+
+              sub:
+                fallback.sub,
+
+              date:
+                mappedDate ||
+                fallback.date,
+
+              time:
+                mappedTime ||
+                fallback.time,
+
+              venue:
+                "Doctor House Chak No. 109 TDA",
+
+              address:
+                "",
+
+              maps:
+                "",
+            },
+          ];
+        }
+
+        /*
+         * ==========================
+         * BARAAT
+         * ==========================
+         *
+         * Arrival 11:00 AM
+         * No venue
+         * No address
+         * No maps
+         */
+
+        if (
+          fallback.slug ===
+          "baraat"
+        ) {
+          return [
+            {
+              key:
+                fallback.slug,
+
+              name:
+                fallback.name,
+
+              sub:
+                fallback.sub,
+
+              date:
+                mappedDate ||
+                fallback.date,
+
+              time:
+                "11:00 AM",
+
+              venue:
+                "",
+
+              address:
+                "",
+
+              maps:
+                "",
+            },
+          ];
+        }
+
+        /*
+         * ==========================
+         * WALIMA
+         * ==========================
+         */
+
+        const eventVenue =
+          event.venue_name ||
+          venue;
+
+        const eventAddress =
+          event.venue_address ||
+          address;
+
+        const eventMaps =
+          event.google_maps_url ||
+          `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            `${eventVenue} ${eventAddress}`
+          )}`;
+
+        return [
+          {
             key:
               fallback.slug,
 
@@ -441,106 +547,15 @@ export function mapData(
               fallback.time,
 
             venue:
-              "Doctor House Chak No. 109 TDA",
+              eventVenue,
 
             address:
-              "",
+              eventAddress,
 
             maps:
-              "",
-          };
-        }
-
-        /*
-         * =====================================
-         * FINAL BARAAT
-         * =====================================
-         *
-         * Arrival / time: 11:00 AM
-         * Venue removed
-         * Address removed
-         * Maps removed
-         */
-
-        if (
-          fallback.slug ===
-          "baraat"
-        ) {
-          return {
-            key:
-              fallback.slug,
-
-            name:
-              fallback.name,
-
-            sub:
-              fallback.sub,
-
-            date:
-              mappedDate ||
-              fallback.date,
-
-            time:
-              "11:00 AM",
-
-            venue:
-              "",
-
-            address:
-              "",
-
-            maps:
-              "",
-          };
-        }
-
-        /*
-         * =====================================
-         * WALIMA / OTHER EVENT
-         * =====================================
-         */
-
-        const eventVenue =
-          event?.venue_name ||
-          venue;
-
-        const eventAddress =
-          event?.venue_address ||
-          address;
-
-        const eventMaps =
-          event?.google_maps_url ||
-          `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            `${eventVenue} ${eventAddress}`
-          )}`;
-
-        return {
-          key:
-            fallback.slug,
-
-          name:
-            fallback.name,
-
-          sub:
-            fallback.sub,
-
-          date:
-            mappedDate ||
-            fallback.date,
-
-          time:
-            mappedTime ||
-            fallback.time,
-
-          venue:
-            eventVenue,
-
-          address:
-            eventAddress,
-
-          maps:
-            eventMaps,
-        };
+              eventMaps,
+          },
+        ];
       }
     );
 
